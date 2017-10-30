@@ -91,8 +91,6 @@ def get_test_data_r():
 
     return t_data
 
-
-
 if __name__=="__main__":
     s = ((1, 2, 3, 4), (0, 1), (0, 1), (0, 1), (1, 2, 3), (1, 2, 3))
     train_data = get_test_data_r()
