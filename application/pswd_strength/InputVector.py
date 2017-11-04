@@ -4,6 +4,11 @@
 import re
 import random
 from nonlinear import naiveBayes
+from application.pswd_strength.identifyWordsAndPinyin import WordsAndPinyinId
+from application.pswd_strength.IdentifyKeyboardPattern import KeyBoradPatternId
+from application.pswd_strength.IdentifyDate import DateId
+import pickle
+
 
 # 返回密码的多样性指数
 def get_structure_variety(pswd):
@@ -70,15 +75,23 @@ def get_simularity_num(pswd):
         if line == None or line == "": break
 
         index = line.split(":")[0]
-        code = line.split(":")[1]
+        code = line.split(":")[1].strip()
 
-        if get_simularity_degree_pws(pswd, code.strip()) >= 0.7: # 如果两个密码相似度大于等于0.7，将它们归为一个相似密码类
+        if get_simularity_degree_pws(pswd, code) >= 0.7: # 如果两个密码相似度大于等于0.7，将它们归为一个相似密码类
             s_num += 1
-            print("index: %s, pw: %s" % (index,code))
+            # print("index: %s, pw: %s" % (index,code))
     return s_num # 返回相似密码类的总数
 
 def get_vector(pswd): # 特征向量定义：（结构多样性指数， 键盘密码占比， 日期密码占比， 拼音单词占比， 与密码库相似指数）
-    return
+    v = [0, 0, 0, 0, 0]
+
+    v[0] = get_structure_variety(pswd)
+    v[1] = int(KeyBoradPatternId().isKBPattern(pswd))
+    v[2] = int(DateId(pswd).checkDate()[0])
+    v[3] = int(WordsAndPinyinId().identify(pswd))
+    v[4] = get_simularity_num(pswd)
+
+    return v
 
 def get_test_data_r():
     t_data = []
@@ -92,10 +105,33 @@ def get_test_data_r():
     return t_data
 
 if __name__=="__main__":
-    s = ((1, 2, 3, 4), (0, 1), (0, 1), (0, 1), (1, 2, 3), (1, 2, 3))
-    train_data = get_test_data_r()
+    train_data = []
 
-    nb = naiveBayes.NaiveBayes(s, train_data)
-    nb.get_c((1, 0, 0, 1, 3))
+    # file = open("yahoo_pswd")
+    #
+    # n = 5000
+    # while n:
+    #     line = file.readline()
+    #     if line == None or line == "": break
+    #     ind = line.split(":")[0]
+    #     pswd = line.split(":")[1].strip()
+    #     train_data.append(get_vector(pswd))
+    #     print("ind: %s pw: %s    finished!" % (ind, pswd))
+    #     n -= 1
+    #
+    # f = open("train_data", 'wb+')
+    # pickle.dump(train_data, f)
+    # f.close()
 
-    print(u"预测结果是：y = %d " % nb.get_c((2, "s")))
+    f_r = open("train_data", "rb+")
+    train_data = pickle.load(f_r)
+    print("-------------------------------------")
+    print(len(train_data))
+
+    # s = ((1, 2, 3, 4), (0, 1), (0, 1), (0, 1), (1, 2, 3), (1, 2, 3))
+    # train_data = get_test_data_r()
+    #
+    # nb = naiveBayes.NaiveBayes(s, train_data)
+    # nb.get_c((1, 0, 0, 1, 3))
+    #
+    # print(u"预测结果是：y = %d " % nb.get_c((2, "s")))
